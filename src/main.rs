@@ -31,7 +31,8 @@ async fn main() {
         for i in 0..rows as usize {
             for j in 0..cols as usize {
                 if grid[i][j].alive() {
-                    draw_rectangle(j as f32 * tile, i as f32 * tile, tile, tile, WHITE);
+                    let color = age_to_color(grid[i][j].age());
+                    draw_rectangle(j as f32 * tile, i as f32 * tile, tile, tile, color);
                 }
             }
         }
@@ -42,6 +43,18 @@ async fn main() {
 
         next_frame().await
     }
+}
+fn age_to_color(age: u32) -> Color {
+    let max_age = 20; // After 20 generations, color stops changing
+    let t = (age.min(max_age) as f32) / (max_age as f32);
+
+    // interpolate from blue → green → yellow → red
+    Color::new(
+        t,       // red increases
+        1.0 - t, // green decreases
+        0.2,     // constant blue tint
+        1.0,
+    )
 }
 fn terminal_display() {
     let rows = 50;
