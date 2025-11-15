@@ -1,0 +1,99 @@
+use conway_game_of_life::Cell;
+use std::{isize, thread::sleep, time};
+
+// fn main() {
+//     window_display();
+// }
+
+use macroquad::prelude::*;
+
+#[macroquad::main("MyGame")]
+async fn main() {
+    let width = screen_width(); //800
+    let height = screen_height(); //600
+    let delay = 0.05;
+    let mut time = get_time();
+    let tile = width / 300.;
+    let rows = height / tile;
+    let cols = width / tile;
+    let mut grid: Vec<Vec<Cell>> = (0..rows as u32)
+        .map(|_| (0..cols as u32).map(|_| Cell::init_cell()).collect())
+        .collect();
+
+    loop {
+        clear_background(BLACK);
+
+        for i in 0..rows as usize {
+            for j in 0..cols as usize {
+                if grid[i][j].alive() {
+                    draw_rectangle(j as f32 * tile, i as f32 * tile, tile, tile, WHITE);
+                }
+            }
+        }
+        if get_time() - time > delay {
+            time = get_time();
+            grid = next_generation(&mut grid);
+        }
+
+        next_frame().await
+    }
+}
+fn terminal_display() {
+    let n = 50;
+    let m = 80;
+
+    let mut grid: Vec<Vec<Cell>> = (0..n)
+        .map(|_| (0..m).map(|_| Cell::init_cell()).collect())
+        .collect();
+
+    loop {
+        display_grid(&grid);
+        grid = next_generation(&grid);
+        sleep(time::Duration::from_millis(50));
+    }
+}
+
+fn display_grid(grid: &Vec<Vec<Cell>>) {
+    println!("The gen ");
+    for i in grid {
+        for j in i {
+            if j.alive() {
+                print!("▀");
+            } else {
+                print!(" ");
+            }
+        }
+        println!();
+    }
+}
+
+fn next_generation(grid: &Vec<Vec<Cell>>) -> Vec<Vec<Cell>> {
+    let rows = grid.len();
+    let cols = grid[0].len();
+
+    let mut new_grid: Vec<Vec<Cell>> = (0..rows)
+        .map(|_| (0..cols).map(|_| Cell::new(false, 0)).collect())
+        .collect();
+
+    let delrow = [-1, -1, -1, 0, 0, 1, 1, 1];
+    let delcol = [-1, 0, 1, -1, 1, -1, 0, 1];
+    for i in 0..rows {
+        for j in 0..cols {
+            let mut count = 0;
+            for k in 0..8 {
+                let newrow = i as isize + delrow[k];
+                let newcol = j as isize + delcol[k];
+                if newrow < 0 || newrow >= rows as isize || newcol < 0 || newcol >= cols as isize {
+                    continue;
+                }
+                let newrow = newrow as usize;
+                let newcol = newcol as usize;
+                if grid[newrow][newcol].alive() {
+                    count += 1;
+                }
+            }
+            new_grid[i][j].check_rules(grid[i][j].alive(), count);
+        }
+    }
+    new_grid
+}
