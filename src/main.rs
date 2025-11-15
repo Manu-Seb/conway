@@ -1,12 +1,15 @@
 use conway_game_of_life::Cell;
 use std::{isize, thread::sleep, time};
 
-// fn main() {
-//     window_display();
-// }
 
 use macroquad::prelude::*;
 
+#[cfg(feature = "terminal")]
+fn main() {
+    terminal_display();
+}
+
+#[cfg(feature = "window")]
 #[macroquad::main("MyGame")]
 async fn main() {
     let width = screen_width(); //800
