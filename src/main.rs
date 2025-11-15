@@ -1,7 +1,6 @@
 use conway_game_of_life::Cell;
 use std::{isize, thread::sleep, time};
 
-
 use macroquad::prelude::*;
 
 #[cfg(feature = "terminal")]
@@ -23,6 +22,9 @@ async fn main() {
         .map(|_| (0..cols as u32).map(|_| Cell::init_cell()).collect())
         .collect();
 
+    let mut new_grid: Vec<Vec<Cell>> = (0..rows as u32)
+        .map(|_| (0..cols as u32).map(|_| Cell::new(false, 0)).collect())
+        .collect();
     loop {
         clear_background(BLACK);
 
@@ -35,23 +37,26 @@ async fn main() {
         }
         if get_time() - time > delay {
             time = get_time();
-            grid = next_generation(&mut grid);
+            next_generation(&mut grid, &mut new_grid);
         }
 
         next_frame().await
     }
 }
 fn terminal_display() {
-    let n = 50;
-    let m = 80;
+    let rows = 50;
+    let cols = 80;
 
-    let mut grid: Vec<Vec<Cell>> = (0..n)
-        .map(|_| (0..m).map(|_| Cell::init_cell()).collect())
+    let mut grid: Vec<Vec<Cell>> = (0..rows)
+        .map(|_| (0..cols).map(|_| Cell::init_cell()).collect())
         .collect();
 
+    let mut new_grid: Vec<Vec<Cell>> = (0..rows)
+        .map(|_| (0..cols).map(|_| Cell::new(false, 0)).collect())
+        .collect();
     loop {
         display_grid(&grid);
-        grid = next_generation(&grid);
+        next_generation(&mut grid, &mut new_grid);
         sleep(time::Duration::from_millis(50));
     }
 }
@@ -70,13 +75,9 @@ fn display_grid(grid: &Vec<Vec<Cell>>) {
     }
 }
 
-fn next_generation(grid: &Vec<Vec<Cell>>) -> Vec<Vec<Cell>> {
+fn next_generation(grid: &mut Vec<Vec<Cell>>, new_grid: &mut Vec<Vec<Cell>>) {
     let rows = grid.len();
     let cols = grid[0].len();
-
-    let mut new_grid: Vec<Vec<Cell>> = (0..rows)
-        .map(|_| (0..cols).map(|_| Cell::new(false, 0)).collect())
-        .collect();
 
     let delrow = [-1, -1, -1, 0, 0, 1, 1, 1];
     let delcol = [-1, 0, 1, -1, 1, -1, 0, 1];
@@ -98,5 +99,5 @@ fn next_generation(grid: &Vec<Vec<Cell>>) -> Vec<Vec<Cell>> {
             new_grid[i][j].check_rules(grid[i][j].alive(), count);
         }
     }
-    new_grid
+    std::mem::swap(grid, new_grid);
 }
